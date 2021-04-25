@@ -1,4 +1,6 @@
 import datetime
+import json
+from json import JSONEncoder
 
 class Tweet:
     def __init__(self, text):
@@ -6,7 +8,7 @@ class Tweet:
         self.likes = 0
         self.date = str(datetime.datetime.now())
 
-    def __init__(self):
-        self.text = ""
-        self.likes = 0
-        self.date = str(datetime.datetime.now())
+    def jsonify(self):
+        newTweet = {"tweet":self.text, "likes":self.likes, "date":self.date}
+        return newTweet
+

@@ -4,7 +4,7 @@ from flask_restful import Api, Resource
 from flask_sqlalchemy import SQLAlchemy
 from Tweet import Tweet
 from sqlalchemy.ext.mutable import MutableList
-
+import json
 app = Flask(__name__)
 api = Api(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
@@ -41,16 +41,36 @@ class apiUser(Resource):
         else:
             return jsonify([False])
 
+class getTweets(Resource):
+    def get(self, username):
+        user = User.query.filter_by(username=username).first()
+        return jsonify(tweetsJsonify(user.tweets))
 
+class addTweets(Resource):
+    def post(self, username, text):
+        tweet = Tweet(text)
+        user = User.query.filter_by(username=username).first()
+        user.tweets.append(tweet)
+        db.session.add(user)
+        db.session.commit()
+        return jsonify(tweet.jsonify())
+
+def tweetsJsonify(list):
+    newTweets = []
+    for tweet in list:
+        newTweets.append(tweet.jsonify())
+    return newTweets
 @app.route("/getUsers")
 def getUsers():
     allUsers = User.query.all()
     data = {}
     for user in allUsers:
-        data[user.username] = {"username": user.username, "password": user.password, "tweets":user.tweets}
+        data[user.username] = {"username": user.username, "password": user.password, "tweets":tweetsJsonify(user.tweets)}
     return jsonify(data)
 
 
 api.add_resource(apiUser, '/user/<string:username>/<string:password>')
+api.add_resource(getTweets, '/tweets/<string:username>')
+api.add_resource(addTweets, '/tweets/<string:username>/<string:text>')
 if __name__ == "__main__":
     app.run(debug=True)
