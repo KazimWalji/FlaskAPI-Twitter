@@ -58,18 +58,20 @@ class apiUser(Resource):
         print("username:", username)
         exists = (User.query.filter_by(username=username).first())
         if exists is not None:
-            return jsonify([False])
+            abort(404,message="User exists")
         tempUser = User(username=username, password=password, tweets=[])
         db.session.add(tempUser)
         db.session.commit()
-        return jsonify([True])
+        print(tempUser.jsonify())
+        return jsonify(tempUser.jsonify())
 
     def get(self, username, password):
         user = (User.query.filter_by(username=username, password=password).first())
-        if user is not None:
-            return jsonify([True])
+        if user is None:
+            abort(404,message="User doesn't exist")
         else:
-            return jsonify([False])
+            print(user.jsonify())
+            return jsonify(user.jsonify())
 
 class getTweets(Resource):
     def get(self, username):
@@ -101,10 +103,12 @@ class addTweets(Resource):
     def post(self, username, text):
         tweet = Tweet(text)
         user = User.query.filter_by(username=username).first()
+        if user is None:
+            return jsonify([False])
         user.tweets.append(tweet)
         db.session.add(user)
         db.session.commit()
-        return jsonify(tweet.jsonify())
+        return jsonify([True])
 
 def tweetsJsonify(list):
     newTweets = []
